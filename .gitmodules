@@ -1,0 +1,3 @@
+[submodule "website/portfolio/themes/bookworm-light-hugo"]
+	path = website/portfolio/themes/bookworm-light-hugo
+	url = https://github.com/TheHelpfulOtter/bookworm-light-hugo.git
