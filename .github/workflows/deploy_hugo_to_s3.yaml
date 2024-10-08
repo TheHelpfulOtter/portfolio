@@ -50,7 +50,7 @@ jobs:
       uses: actions/upload-artifact@v4.4.1
       with:
         name: hugo-site
-        path: ./public
+        path: website/portfolio/public
 
   deploy:
     runs-on: ubuntu-latest
