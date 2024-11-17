@@ -7,22 +7,62 @@ from aws_lambda_powertools import Logger
 from datetime import datetime
 
 dynamodb_resource = boto3.resource("dynamodb", region_name="eu-west-1")
-table = dynamodb_resource.Table(os.environ["TABLE"])
+TABLE = dynamodb_resource.Table(os.environ["TABLE"])
 
-def add_visitor_to_table(current_date: str, current_hour: str) -> None:
-    visitor_count = 1
+def add_visitor_to_table() -> None:
+    try:
+        current_time = datetime.now()
+        current_date = current_time.strftime("%Y-%m-%d")
 
-    update_attributes = {
-        "date": current_date,
-        "hour": current_hour,
-        "visitors": visitor_count,
-    }
+        updates = [
+            # Daily counter
+            {
+                "Key": {"pk": "daily_", "sk": current_date},
+                "UpdateExpression": "ADD visitors :inc",
+                "ExpressionAttributeValues": {":inc": 1}
+            },
+            # Total counter
+            {
+                "Key": {"pk": "total_", "sk": "historic"},
+                "UpdateExpression": "ADD visitors :inc",
+                "ExpressionAttributeValues": {":inc": 1}
+            }
+        ]
+        
+        for update in updates:
+            TABLE.update_item(**update)
+        
+        logger.info(">>> DDB Table updated.")
 
-    return None
+        return None
+        
+    except Exception as e:
+        logger.info(str(e))
+
+        return None
 
 
-def get_visitor_count():
-    pass
+def get_visitor_count() -> int | None:
+    try:
+        response = TABLE.get_item(
+            Key={
+                "pk": "total_",
+                "sk": "historic"
+            }
+        )
+        
+        item = response.get("Item", {})
+        total_visitors = item.get("visitors", 0) 
+
+        logger.info("Total visitors retrieved.")
+        logger.info(total_visitors)
+
+        return total_visitors
+    
+    except Exception as e:
+        logger.info(str(e))
+
+        return None
 
 
 def lambda_handler(event, context):
@@ -30,23 +70,24 @@ def lambda_handler(event, context):
 
     if "resource" in event and "/add_visitor" in event:
         try:
-            current_time = datetime.now()
-            current_date = current_time.strftime("%Y-%m-%d")
-            current_hour = current_time.strftime("%H")
-
-            add_visitor_to_table(current_date=current_date, current_hour=current_hour)
+            add_visitor_to_table()
 
         except Exception as e:
-            return {
-                'statusCode': 500,
-                'body': f"Error updating visitor count: {str(e)}"
-            }
+            logger.info(str(e))
+
+            return "Could not add visitor to table."
         
     elif "resource" in event and "/get_visitor_count" in event:
-        get_visitor_count()
+        try:
+            get_visitor_count()
 
-    # TODO implement
+        except Exception as e:
+            logger.info(str(e))
+
+            return "Could not get visitor from table."
+
+    logger.info(event)
+
     return {
-        'statusCode': 200,
-        'body': json.dumps('Hello from Lambda!')
+        "status": "complete"
     }
