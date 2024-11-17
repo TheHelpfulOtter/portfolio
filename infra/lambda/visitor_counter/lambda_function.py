@@ -3,7 +3,7 @@ import urllib
 import boto3
 import os
 from botocore.exceptions import ClientError
-from aws_lambda_powertools import Logger
+# from aws_lambda_powertools import # Logger
 from datetime import datetime
 
 dynamodb_resource = boto3.resource("dynamodb", region_name="eu-west-1")
@@ -29,41 +29,47 @@ def add_visitor_to_table(current_date: str) -> None:
         for update in updates:
             TABLE.update_item(**update)
         
-        logger.info(">>> DDB Table updated.")
+        # logger.info(">>> DDB Table updated.")
 
         return None
         
     except Exception as e:
-        logger.info(str(e))
+        # logger.info(str(e))
 
         return None
 
 
 def get_visitor_count(pk: str, sk: str) -> int | None:
     try:
+        print("#### Getting response")
         response = TABLE.get_item(
             Key={
                 "pk": pk,
                 "sk": sk
             }
         )
+        print(response)
         
         item = response.get("Item", {})
         visitors = item.get("visitors", 0) 
 
-        logger.info(">>> Visitors retrieved.")
-        logger.info(visitors)
+        print(visitors)
+
+        # logger.info(">>> Visitors retrieved.")
+        # logger.info(visitors)
 
         return visitors
     
     except Exception as e:
-        logger.info(str(e))
+        print(e)
+        # logger.info(str(e))
 
         return None
 
 
 def lambda_handler(event, context):
-    logger.info(event)
+    # logger.info(event)
+    print(event)
 
     headers = {
         "Content-Type": "application/json",
@@ -88,7 +94,7 @@ def lambda_handler(event, context):
             }
 
         except Exception as e:
-            logger.info(str(e))
+            # logger.info(str(e))
 
             return {
                 "statusCode": 500,
@@ -100,8 +106,8 @@ def lambda_handler(event, context):
         
     elif "resource" in event and "/get_visitor_count" in event["resource"]:
         try:
-            total_visitors = get_visitor_count(pk="total", sk="historic")
-            daily_visitors = get_visitor_count(pk="daily", sk=current_date)
+            total_visitors = int(get_visitor_count(pk="total", sk="historic"))
+            daily_visitors = int(get_visitor_count(pk="daily", sk=current_date))
 
             return {
                 "statusCode": 200,
@@ -113,7 +119,8 @@ def lambda_handler(event, context):
             }
 
         except Exception as e:
-            logger.info(str(e))
+            print(e)
+            # logger.info(str(e))
 
             return {
                 "statusCode": 500,
@@ -123,7 +130,7 @@ def lambda_handler(event, context):
                 })
             }
 
-    logger.info("Invalid endpoint.")
+    # logger.info("Invalid endpoint.")
 
     return {
         "statusCode": 400,
