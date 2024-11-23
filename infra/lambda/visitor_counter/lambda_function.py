@@ -70,29 +70,44 @@ def lambda_handler(event, context):
     # Get the origin from headers
     headers = event.get('headers', {})
     origin = headers.get('origin', '')
+    if not origin and 'Origin' in headers:
+        origin = headers['Origin']
     
     # List of allowed origins
     allowed_origins = [
-        DEV_URL,  # Local development
-        BASE_URL  # Production site
+        "http://127.0.0.1:1313",
+        "http://localhost:1313",
+        BASE_URL,
+        "https://www.danielkuan.com",
+        "https://danielkuan.com"
     ]
     
-    # Set CORS headers based on origin
+    # Set CORS headers
     response_headers = {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Headers": "Content-Type,Origin",
-        "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
+        "Access-Control-Allow-Credentials": "true"
     }
     
+    # Handle OPTIONS preflight request
+    if event.get('httpMethod') == 'OPTIONS':
+        return {
+            "statusCode": 200,
+            "headers": response_headers,
+            "body": ""
+        }
+
     # Only allow specific origins
     if origin in allowed_origins:
         response_headers["Access-Control-Allow-Origin"] = origin
     else:
+        logger.warning(f"Unauthorized origin: '{origin}' not in allowed origins: {allowed_origins}")
         return {
             "statusCode": 403,
             "headers": response_headers,
             "body": json.dumps({
-                "message": "Unauthorized origin"
+                "message": f"Unauthorized origin: '{origin}'"
             })
         }
 
