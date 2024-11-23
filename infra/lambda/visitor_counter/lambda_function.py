@@ -78,16 +78,15 @@ def lambda_handler(event, context):
         "http://127.0.0.1:1313",
         "http://localhost:1313",
         BASE_URL,
-        "https://www.danielkuan.com",
-        "https://danielkuan.com"
+        # "https://www.danielkuan.com",
+        # "https://danielkuan.com"
     ]
     
     # Set CORS headers
     response_headers = {
         "Content-Type": "application/json",
         "Access-Control-Allow-Headers": "Content-Type",
-        "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
-        "Access-Control-Allow-Credentials": "true"
+        "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
     }
     
     # Handle OPTIONS preflight request
