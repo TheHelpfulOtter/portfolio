@@ -64,13 +64,35 @@ def get_visitor_count(pk: str, sk: str) -> int | None:
 
 def lambda_handler(event, context):
     logger.info(event)
-
-    headers = {
+    
+    # Get the origin from headers
+    headers = event.get('headers', {})
+    origin = headers.get('origin', '')
+    
+    # List of allowed origins
+    allowed_origins = [
+        DEV_URL,  # Local development
+        BASE_URL  # Production site
+    ]
+    
+    # Set CORS headers based on origin
+    response_headers = {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Headers": "Content-Type,Origin",
         "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
     }
+    
+    # Only allow specific origins
+    if origin in allowed_origins:
+        response_headers["Access-Control-Allow-Origin"] = origin
+    else:
+        return {
+            "statusCode": 403,
+            "headers": response_headers,
+            "body": json.dumps({
+                "message": "Unauthorized origin"
+            })
+        }
 
     current_time = datetime.now()
     current_date = current_time.strftime("%Y-%m-%d")
@@ -81,7 +103,7 @@ def lambda_handler(event, context):
 
             return {
                 "statusCode": 200,
-                "headers": headers,
+                "headers": response_headers,
                 "body": json.dumps({
                     "message": "Added visitors."
                 })
@@ -91,7 +113,7 @@ def lambda_handler(event, context):
             logger.error(f"Error in add_visitor endpoint: {str(e)}")
             return {
                 "statusCode": 500,
-                "headers": headers,
+                "headers": response_headers,
                 "body": json.dumps({
                     "message": "Could not add visitor to table."
                 })
@@ -104,7 +126,7 @@ def lambda_handler(event, context):
 
             return {
                 "statusCode": 200,
-                "headers": headers,
+                "headers": response_headers,
                 "body": json.dumps({
                     "total_visitors": total_visitors,
                     "daily_visitors": daily_visitors
@@ -115,7 +137,7 @@ def lambda_handler(event, context):
             logger.error(f"Error in get_visitor_count endpoint: {str(e)}")
             return {
                 "statusCode": 500,
-                "headers": headers,
+                "headers": response_headers,
                 "body": json.dumps({
                     "message": "Could not get visitor from table."
                 })
@@ -124,7 +146,7 @@ def lambda_handler(event, context):
     logger.info("Invalid endpoint called")
     return {
         "statusCode": 400,
-        "headers": headers,
+        "headers": response_headers,
         "body": json.dumps({
             "message": "Invalid endpoint"
         })
