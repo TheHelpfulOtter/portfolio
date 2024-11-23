@@ -12,57 +12,53 @@ logger = Logger()
 dynamodb_resource = boto3.resource("dynamodb", region_name="eu-west-1")
 TABLE = dynamodb_resource.Table(os.environ["TABLE"])
 
-def add_visitor_to_table(current_date: str) -> str:
-    updates = [
-        # Daily counter
-        {
-            "Key": {"pk": "daily", "sk": current_date},
-            "UpdateExpression": "ADD visitors :inc",
-            "ExpressionAttributeValues": {":inc": 1}
-        },
-        # Total counter
-        {
-            "Key": {"pk": "total", "sk": "historic"},
-            "UpdateExpression": "ADD visitors :inc",
-            "ExpressionAttributeValues": {":inc": 1}
-        }
-    ]
-    
-    for update in updates:
-        TABLE.update_item(**update)
-    
-    logger.info(">>> Visitor added to table.")
-
-    return {
-        "statusCode": 200,
-        "headers": headers,
-        "body": json.dumps({
-            "message": ">>> Visitor added to table."
-        })
-    }
+def add_visitor_to_table(current_date: str) -> None:
+    try:
+        updates = [
+            # Daily counter
+            {
+                "Key": {"pk": "daily", "sk": current_date},
+                "UpdateExpression": "ADD visitors :inc",
+                "ExpressionAttributeValues": {":inc": 1}
+            },
+            # Total counter
+            {
+                "Key": {"pk": "total", "sk": "historic"},
+                "UpdateExpression": "ADD visitors :inc",
+                "ExpressionAttributeValues": {":inc": 1}
+            }
+        ]
+        
+        for update in updates:
+            TABLE.update_item(**update)
+        
+        logger.info(">>> DDB Table updated.")
+        return None
+        
+    except Exception as e:
+        logger.error(f"Error updating table: {str(e)}")
+        return None
 
 
 def get_visitor_count(pk: str, sk: str) -> int | None:
     try:
+        logger.info("Getting visitor count")
         response = TABLE.get_item(
             Key={
                 "pk": pk,
                 "sk": sk
             }
         )
-        logger.info(response)
+        logger.debug(response)
         
         item = response.get("Item", {})
         visitors = item.get("visitors", 0) 
 
-        logger.info(">>> Visitors retrieved.")
-        logger.info(visitors)
-
+        logger.info(f"Retrieved {visitors} visitors")
         return visitors
     
     except Exception as e:
-        logger.info(str(e))
-
+        logger.error(f"Error getting visitor count: {str(e)}")
         return None
 
 
@@ -81,16 +77,23 @@ def lambda_handler(event, context):
 
     if "resource" in event and "add_visitor" in event["resource"]:
         try:
-            return add_visitor_to_table(current_date=current_date)
+            add_visitor_to_table(current_date=current_date)
+
+            return {
+                "statusCode": 200,
+                "headers": headers,
+                "body": json.dumps({
+                    "message": "Added visitors."
+                })
+            }
 
         except Exception as e:
-            logger.info(str(e))
-
+            logger.error(f"Error in add_visitor endpoint: {str(e)}")
             return {
                 "statusCode": 500,
                 "headers": headers,
                 "body": json.dumps({
-                    "message": str(e)
+                    "message": "Could not add visitor to table."
                 })
             }
         
@@ -109,18 +112,16 @@ def lambda_handler(event, context):
             }
 
         except Exception as e:
-            logger.info(str(e))
-
+            logger.error(f"Error in get_visitor_count endpoint: {str(e)}")
             return {
                 "statusCode": 500,
                 "headers": headers,
                 "body": json.dumps({
-                    "message": str(e)
+                    "message": "Could not get visitor from table."
                 })
             }
 
-    logger.info("Invalid endpoint.")
-
+    logger.info("Invalid endpoint called")
     return {
         "statusCode": 400,
         "headers": headers,
