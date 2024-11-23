@@ -11,6 +11,8 @@ logger = Logger()
 
 dynamodb_resource = boto3.resource("dynamodb", region_name="eu-west-1")
 TABLE = dynamodb_resource.Table(os.environ["TABLE"])
+DEV_URL = os.environ["DEV_URL"]
+BASE_URL = os.environ["BASE_URL"]
 
 def add_visitor_to_table(current_date: str) -> None:
     try:
