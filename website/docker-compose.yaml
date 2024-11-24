@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  hugo:
+    image: hugo
+    container_name: hugo
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./portfolio:/app
+    ports:
+      - "1313:1313"
+    command: hugo serve --bind 0.0.0.0
