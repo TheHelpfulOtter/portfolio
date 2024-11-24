@@ -167,3 +167,5 @@ cython_debug/
 # Hugo public build
 public/
 website/portfolio/resources/
+
+.tool-versions
