@@ -1,6 +1,6 @@
 ######################## default configuration ####################
 baseURL = "https://demo.gethugothemes.com/bookworm-light/"
-title = "Bookworm - Personal Blog Template"
+title = "Daniel Kuan Portfolio Site"
 theme = "bookworm-light-hugo"
 # post pagination
 paginate = "5"
@@ -10,6 +10,7 @@ summaryLength = "20"
 googleAnalytics = "" # example : UA-123-45
 # disqus short name
 disqusShortname = "themefisher-template" # get your shortname form here : https://disqus.com
+
 
 ############################# Modules ##############################
 [module.hugoVersion]
