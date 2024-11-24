@@ -17,13 +17,13 @@ BASE_URL = os.environ["BASE_URL"]
 def add_visitor_to_table(current_date: str) -> None:
     try:
         updates = [
-            # Daily counter
+            # Daily visitors counter
             {
                 "Key": {"pk": "daily", "sk": current_date},
                 "UpdateExpression": "ADD visitors :inc",
                 "ExpressionAttributeValues": {":inc": 1}
             },
-            # Total counter
+            # Total visitors counter
             {
                 "Key": {"pk": "total", "sk": "historic"},
                 "UpdateExpression": "ADD visitors :inc",
@@ -73,15 +73,6 @@ def lambda_handler(event, context):
     if not origin and 'Origin' in headers:
         origin = headers['Origin']
     
-    # List of allowed origins
-    allowed_origins = [
-        "http://127.0.0.1:1313",
-        "http://localhost:1313",
-        BASE_URL,
-        # "https://www.danielkuan.com",
-        # "https://danielkuan.com"
-    ]
-    
     # Set CORS headers
     response_headers = {
         "Content-Type": "application/json",
@@ -97,11 +88,11 @@ def lambda_handler(event, context):
             "body": ""
         }
 
-    # Only allow specific origins
-    if origin in allowed_origins:
+    # Check if origin matches either base URL or dev URL domain
+    if origin.startswith(BASE_URL) or origin.startswith(DEV_URL):
         response_headers["Access-Control-Allow-Origin"] = origin
     else:
-        logger.warning(f"Unauthorized origin: '{origin}' not in allowed origins: {allowed_origins}")
+        logger.warning(f"Unauthorized origin: '{origin}'")
         return {
             "statusCode": 403,
             "headers": response_headers,
