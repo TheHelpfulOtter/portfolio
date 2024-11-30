@@ -6,11 +6,7 @@ from botocore.exceptions import ClientError
 from aws_lambda_powertools import Logger
 from datetime import datetime
 
-# Initialize logger
 logger = Logger()
-
-# DELETE THIS COMMENT LATER
-# I'm adding it because ECR is being dumb and still adding an old version of the lambda function
 
 DEV_URL = os.environ["DEV_URL"]
 BASE_URL = os.environ["BASE_URL"]
