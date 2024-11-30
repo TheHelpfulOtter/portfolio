@@ -6,15 +6,12 @@ from botocore.exceptions import ClientError
 from aws_lambda_powertools import Logger
 from datetime import datetime
 
-# Initialize logger
 logger = Logger()
 
-dynamodb_resource = boto3.resource("dynamodb", region_name="eu-west-1")
-TABLE = dynamodb_resource.Table(os.environ["TABLE"])
 DEV_URL = os.environ["DEV_URL"]
 BASE_URL = os.environ["BASE_URL"]
 
-def add_visitor_to_table(current_date: str) -> None:
+def add_visitor_to_table(current_date: str, table: str) -> None:
     try:
         updates = [
             # Daily visitors counter
@@ -32,7 +29,7 @@ def add_visitor_to_table(current_date: str) -> None:
         ]
         
         for update in updates:
-            TABLE.update_item(**update)
+            table.update_item(**update)
         
         logger.info(">>> DDB Table updated.")
         return None
@@ -42,10 +39,10 @@ def add_visitor_to_table(current_date: str) -> None:
         return None
 
 
-def get_visitor_count(pk: str, sk: str) -> int | None:
+def get_visitor_count(pk: str, sk: str, table: str) -> int | None:
     try:
         logger.info("Getting visitor count")
-        response = TABLE.get_item(
+        response = table.get_item(
             Key={
                 "pk": pk,
                 "sk": sk
@@ -117,9 +114,12 @@ def lambda_handler(event, context):
     current_time = datetime.now()
     current_date = current_time.strftime("%Y-%m-%d")
 
+    dynamodb_resource = boto3.resource("dynamodb", region_name="eu-west-1")
+    TABLE = dynamodb_resource.Table(os.environ["TABLE"])
+
     if "resource" in event and "add_visitor" in event["resource"]:
         try:
-            add_visitor_to_table(current_date=current_date)
+            add_visitor_to_table(current_date=current_date, table=TABLE)
 
             return {
                 "statusCode": 200,
@@ -141,8 +141,8 @@ def lambda_handler(event, context):
         
     elif "resource" in event and "/get_visitor_count" in event["resource"]:
         try:
-            total_visitors = int(get_visitor_count(pk="total", sk="historic"))
-            daily_visitors = int(get_visitor_count(pk="daily", sk=current_date))
+            total_visitors = int(get_visitor_count(pk="total", sk="historic", table=TABLE))
+            daily_visitors = int(get_visitor_count(pk="daily", sk=current_date, table=TABLE))
 
             return {
                 "statusCode": 200,
