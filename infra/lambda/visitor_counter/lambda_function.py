@@ -68,20 +68,21 @@ def lambda_handler(event, context):
     logger.info(event)
     
     # Get the origin from headers
-    headers = event.get('headers', {})
-    origin = headers.get('origin', '')
-    if not origin and 'Origin' in headers:
-        origin = headers['Origin']
+    headers = event.get("headers", {})
+    referer = headers.get("Referer")
+    origin = headers.get("origin", "")
+    if not origin and "Origin" in headers:
+        origin = headers["Origin"]
     
     # Set CORS headers
     response_headers = {
         "Content-Type": "application/json",
         "Access-Control-Allow-Headers": "Content-Type",
-        "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
+        "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
     }
     
     # Handle OPTIONS preflight request
-    if event.get('httpMethod') == 'OPTIONS':
+    if event.get("httpMethod") == "OPTIONS":
         return {
             "statusCode": 200,
             "headers": response_headers,
@@ -89,15 +90,27 @@ def lambda_handler(event, context):
         }
 
     # Check if origin matches either base URL or dev URL domain
-    if origin.startswith(BASE_URL) or origin.startswith(DEV_URL):
+    # For localhost development
+    if origin and origin.startswith(DEV_URL):
         response_headers["Access-Control-Allow-Origin"] = origin
+        response_headers["Access-Control-Allow-Methods"] = "OPTIONS,POST,GET"
+        response_headers["Access-Control-Allow-Headers"] = "Content-Type"
+        logger.info(f"Call came from same dev origin.")
+
+    if referer and referer.startswith(BASE_URL):
+        logger.info(f"Call came from same origin.")
+        pass
+
     else:
-        logger.warning(f"Unauthorized origin: '{origin}'")
+        logger.warning(f"Unauthorized origin: {origin}")
         return {
             "statusCode": 403,
-            "headers": response_headers,
+            "headers": {
+                **response_headers,  # Include all CORS headers
+                "Access-Control-Allow-Origin": "*"  # Keep the default for error responses
+            },
             "body": json.dumps({
-                "message": f"Unauthorized origin: '{origin}'"
+                "message": f"Unauthorized origin: {origin}"
             })
         }
 
