@@ -169,3 +169,14 @@ public/
 website/portfolio/resources/
 
 .tool-versions
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+.terraformrc
+terraform.rc
+.terraform.lock.hcl
+*.plan
