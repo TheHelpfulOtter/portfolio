@@ -180,3 +180,6 @@ website/portfolio/resources/
 terraform.rc
 .terraform.lock.hcl
 *.plan
+
+# Exclude example.tfvars from being ignored
+!infra/terraform/backend/tfvars/example.tfvars
