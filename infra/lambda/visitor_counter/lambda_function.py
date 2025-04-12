@@ -9,8 +9,14 @@ from datetime import datetime
 logger = Logger()
 
 DEV_URL = os.environ["DEV_URL"]
-DEV_URL = os.environ["DEV_URL_WWW"]
+DEV_URL_WWW = os.environ["DEV_URL_WWW"]
 BASE_URL = os.environ["BASE_URL"]
+
+ALLOWED_ORIGINS = [
+    DEV_URL,
+    DEV_URL_WWW,
+    BASE_URL
+]
 
 def add_visitor_to_table(current_date: str, table: str) -> None:
     try:
@@ -89,7 +95,7 @@ def lambda_handler(event, context):
 
     # Check if origin matches either base URL or dev URL domain
     # For localhost development
-    if origin and origin.startswith(DEV_URL):
+    if origin and origin in ALLOWED_ORIGINS:
         response_headers["Access-Control-Allow-Origin"] = origin
         response_headers["Access-Control-Allow-Methods"] = "OPTIONS,POST,GET"
         response_headers["Access-Control-Allow-Headers"] = "Content-Type"
