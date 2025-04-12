@@ -9,6 +9,7 @@ from datetime import datetime
 logger = Logger()
 
 DEV_URL = os.environ["DEV_URL"]
+DEV_URL = os.environ["DEV_URL_WWW"]
 BASE_URL = os.environ["BASE_URL"]
 
 def add_visitor_to_table(current_date: str, table: str) -> None:
